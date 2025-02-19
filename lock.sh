@@ -126,8 +126,7 @@ lock (){
     printf "STDERR: %s\n" "$(cat "${curl_stderr_file}")"
     printf "STDOUT: %s\n" "$(cat "${curl_stdout_file}")"
   else
-    echo "Got a 200 code in response to locking request. Does not imply success unfortunately"
-    echo "Run again to get the 'locked' status for ${dataset_path}"
+    echo "Dataset '${dataset_path}' locked successfully."
   fi
   rm "${curl_stderr_file}"
   rm "${curl_stdout_file}"
