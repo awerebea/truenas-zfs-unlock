@@ -1,6 +1,19 @@
 #!/bin/sh
 set -e
 
+# Set default values for command line arguments
+recursive="false"
+
+# Process command line arguments
+while [ $# -gt 0 ]; do
+  case "$1" in
+  -r | --recursive)
+    recursive="true"
+    ;;
+  esac
+  shift
+done
+
 # Configure global curl flags
 curl_flags="--silent --show-error --connect-timeout 3"
 if [ "${SKIP_CERT_VERIFY}" = "true" ]; then
@@ -92,22 +105,25 @@ unlock (){
   dataset="$2"
   dataset_path="${pool}/${dataset}"
   passphrase="$3"
+  recursive="$4"
 
   json=$(jq --null-input \
     --arg dataset_path "${dataset_path}" \
     --arg passphrase "${passphrase}" \
+    --argjson recursive "${recursive}" \
     '
       {
         "id": $dataset_path,
         "unlock_options": {
           "key_file": false,
-          "recursive": false,
+          "recursive": $recursive,
           "force": true,
           "toggle_attachments": true,
           "datasets": [
             {
               "name": $dataset_path,
-              "passphrase": $passphrase
+              "passphrase": $passphrase,
+              "recursive": $recursive,
             }
           ]
         }
@@ -173,7 +189,7 @@ for zfs_var in ${zfs_env_vars}; do
   # Check if locked
   if is_locked "${pool}" "${dataset}"; then
     echo "${pool}/${dataset} is locked, attempting to unlock..."
-    unlock "${pool}" "${dataset}" "${passphrase}"
+    unlock "${pool}" "${dataset}" "${passphrase}" "${recursive}"
   fi
 done
 

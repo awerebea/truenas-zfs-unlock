@@ -1,6 +1,19 @@
 #!/bin/sh
 set -e
 
+# Set default values for command line arguments
+force_umount="false"
+
+# Process command line arguments
+while [ $# -gt 0 ]; do
+  case "$1" in
+  -f | --force-umount)
+    force_umount="true"
+    ;;
+  esac
+  shift
+done
+
 # Configure global curl flags
 curl_flags="--silent --show-error --connect-timeout 3"
 if [ "${SKIP_CERT_VERIFY}" = "true" ]; then
@@ -91,14 +104,16 @@ lock (){
   pool="$1"
   dataset="$2"
   dataset_path="${pool}/${dataset}"
+  force_umount="$3"
 
   json=$(jq --null-input \
     --arg dataset_path "${dataset_path}" \
+    --argjson force_umount "${force_umount}" \
     '
       {
         "id": $dataset_path,
         "lock_options": {
-          "force_umount": false
+          "force_umount": $force_umount
         }
       }
     '
@@ -163,7 +178,7 @@ for zfs_var in ${zfs_env_vars}; do
   # Check if locked
   if is_unlocked "${pool}" "${dataset}"; then
     echo "${pool}/${dataset} is unlocked, attempting to lock..."
-    lock "${pool}" "${dataset}"
+    lock "${pool}" "${dataset}" "${force_umount}"
   fi
 done
 
