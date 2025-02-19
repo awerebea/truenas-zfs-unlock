@@ -10,5 +10,6 @@ RUN apk add --update --no-cache \
 
 COPY --chmod=500 entry.sh /entry.sh
 COPY --chmod=500 unlock.sh /usr/local/bin/unlock
+COPY --chmod=500 lock.sh /usr/local/bin/lock
 
 CMD ["/entry.sh"]
